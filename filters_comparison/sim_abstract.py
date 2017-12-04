@@ -15,7 +15,8 @@ class Sim_Abstract(ABC):
     def __init__(self,
                  x_0,
                  Q,
-                 R):
+                 R,
+                 dt=1.):
         x_0 = np.array(x_0)
         self.x_0 = x_0
         self.all_x = []
@@ -29,9 +30,10 @@ class Sim_Abstract(ABC):
         self.R = R
 
         self.k = 0
+        self.dt = dt
 
     @abstractmethod
-    def f(self, x):
+    def f(self, x, dt):
         pass
 
     @abstractmethod
@@ -42,7 +44,7 @@ class Sim_Abstract(ABC):
     Jacobian function of f
     """
     @abstractmethod
-    def F(self, x):
+    def F(self, x, dt):
         pass
 
     """
@@ -57,7 +59,7 @@ class Sim_Abstract(ABC):
     """
     def process_next(self):
         self.k += 1
-        x = self.f(self.x) + np.random.normal(0, self.Q, self.x.shape) 
+        x = self.f(self.x, self.dt) + np.random.normal(0, self.Q, self.x.shape) 
         y = self.h(x)
         y += np.random.normal(0, self.R, y.shape)
         self.all_x.append(x)

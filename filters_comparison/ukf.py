@@ -22,11 +22,10 @@ class UKF:
 
 
     def unscented_transform(self, sigma_points, W, noise_cov):
-        kmax, n = sigma_points.shape
-
         x = np.dot(W, sigma_points)
-        y = sigma_points - x[np.newaxis,:]
-        P = y.T.dot(np.diag(W)).dot(y) + noise_cov
+        y = sigma_points - x
+        P = y.T.dot(np.diag(W)).dot(y) 
+        P += noise_cov
         return (x, P)
 
 
@@ -35,7 +34,8 @@ class UKF:
                  h, H,
                  Q, R,
                  kappa,
-                 x_0, P_0):
+                 x_0, P_0,
+                 dt=1.):
         if np.isscalar(x_0):
             x_0 = np.asarray([x_0])
         self.n = np.size(x_0)
@@ -66,14 +66,14 @@ class UKF:
         self.kappa = kappa
 
         self.num_sigmas = 2 * self.n + 1
+        self.dt = dt
 
         self.W = np.full(self.num_sigmas, 0.5/(self.n + self.kappa))
         self.W[0] = self.kappa / (self.n+self.kappa)
 
 
     def predict(self):
-        sigma_points = self.get_sigma_points(self.x_hat, self.P)
-        sigma_points = self.f(sigma_points)
+        sigma_points = self.f(self.get_sigma_points(self.x_hat, self.P), self.dt)
         self.x_hat, self.P = self.unscented_transform(sigma_points, self.W, self.Q)
         self.sigma_points = sigma_points
     
@@ -93,7 +93,7 @@ class UKF:
         self.P = self.P - np.dot(np.dot(K, Pz), K.T)
 
         self.predictions.append(self.x_hat)
-        self.Ps.append(self.P)
+        self.Ps.append(np.linalg.norm(self.P))
 
     def get_prediction(self):
         return self.x_hat
@@ -107,18 +107,21 @@ class UKF:
 
 if __name__ == "__main__":
     from ungm import UNGM
+    from simple_polynomial import Simple_Polynomial
     import matplotlib.pyplot as plt
     x_0 = 0
-    R = 1
-    Q = 1
+    R = 10
+    Q = 10
+
+    plt.show()
 
     sim = UNGM(x_0, R, Q)
     ukf = UKF(sim.f, sim.F,
               sim.h, sim.H,
               sim.Q, sim.R,
-              0.,
+              4.,
               x_0, 1)
-    T = 100
+    T = 20
     for t in range(T):
         x, y = sim.process_next()
         ukf.predict()
@@ -127,3 +130,27 @@ if __name__ == "__main__":
     plt.plot(range(T), ukf.get_all_predictions())
     plt.plot(range(T), sim.get_all_x())
     plt.show()
+
+
+
+
+
+"""
+    from filterpy.kalman import UnscentedKalmanFilter
+    from filterpy.kalman import JulierSigmaPoints
+    sim = UNGM(x_0, R, Q, 1.)
+    T = 20
+
+    ukf = UnscentedKalmanFilter(1, 1, 1, sim.h, sim.f, JulierSigmaPoints(1, 0.))
+    predictions = []
+    for t in range(T):
+        x, y = sim.process_next()
+
+        ukf.predict()
+        ukf.update(y)
+        predictions.append(ukf.x)
+
+
+    plt.plot(range(T), sim.get_all_x())
+    plt.plot(range(T), predictions)
+"""

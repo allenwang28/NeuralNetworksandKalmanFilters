@@ -11,13 +11,13 @@ from sim_abstract import Sim_Abstract
 """
 
 class UNGM(Sim_Abstract):
-    def f(self, x):
+    def f(self, x, dt):
         return 0.5 * x + (25 * x)/(1 + x**2) + 8 * np.cos(1.2 * (self.k - 1)) 
 
     def h(self, x):
         return x**2 / 20.
 
-    def F(self, x):
+    def F(self, x, dt):
         return -50 * x**2 / ((x**2 + 1)**2) + 25/(x**2 + 1) + 0.5
 
     def H(self, x):

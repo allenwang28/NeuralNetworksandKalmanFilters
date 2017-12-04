@@ -39,25 +39,28 @@ class EKF:
                 f, F,
                 h, H,
                 Q, R,
-                x_0, P_0):
+                x_0, P_0,
+                dt=1.):
         self.f = f
         self.F = F
 
         self.h = h
         self.H = H
 
+
         self.Q = np.array(Q)
         self.R = np.array(R)
 
         self.x_hat = np.array(x_0)
         self.P = np.array(P_0)
+        self.dt = dt
 
         self.predictions = []
         self.Ps = []
 
     def predict(self):
-        F = self.F(self.x_hat)
-        self.x_hat = self.f(self.x_hat)
+        F = self.F(self.x_hat, self.dt)
+        self.x_hat = self.f(self.x_hat, self.dt)
         self.P = np.dot(np.dot(F, self.P), self.P.T) + self.Q
 
     def update(self, y):
@@ -68,7 +71,7 @@ class EKF:
         self.x_hat = self.x_hat + np.dot(K, e)
         self.P = self.P - np.dot(np.dot(K, H), self.P)
         self.predictions.append(self.x_hat)
-        self.Ps.append(self.P)
+        self.Ps.append(np.linalg.norm(self.P))
         return self.x_hat, self.P
 
     def get_prediction(self):
@@ -82,6 +85,7 @@ class EKF:
 
 if __name__ == "__main__":
     from ungm import UNGM
+    from simple_polynomial import Simple_Polynomial
     import matplotlib.pyplot as plt
     from scoring import MSE
     x_0 = 0
@@ -102,4 +106,7 @@ if __name__ == "__main__":
 
     plt.plot(range(T), ekf.get_all_predictions())
     plt.plot(range(T), sim.get_all_x())
+    """
+    plt.plot(range(T), ekf.get_all_Ps())
+    """
     plt.show()

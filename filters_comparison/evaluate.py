@@ -10,19 +10,18 @@ num_sims = 100
 T = 100
 
 x_0 = 0
-R = 1
-Q = 1
-
+R = 10
+Q = 10
 
 
 ukf_mses = []
 ekf_mses = []
 for s in range(num_sims):
-    sim = UNGM(x_0, R, Q)
+    sim = UNGM(x_0, R, Q, 1.)
     ukf = UKF(sim.f, sim.F,
               sim.h, sim.H,
               sim.Q, sim.R,
-              0.,
+              5.,
               x_0, 1)
     ekf = EKF(sim.f, sim.F,
               sim.h, sim.H,
