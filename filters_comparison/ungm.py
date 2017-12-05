@@ -1,5 +1,4 @@
-import numpy as np
-
+import numpy as np 
 from sim_abstract import Sim_Abstract
 
 
@@ -35,5 +34,6 @@ if __name__ == "__main__":
     plt.plot(range(T), sim.get_all_y())
     plt.plot(range(T), sim.get_all_x())
     plt.show()
+
 
 

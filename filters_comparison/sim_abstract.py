@@ -62,6 +62,11 @@ class Sim_Abstract(ABC):
         x = self.f(self.x, self.dt) + np.random.normal(0, self.Q, self.x.shape) 
         y = self.h(x)
         y += np.random.normal(0, self.R, y.shape)
+
+        if len(x.shape) > 0 and x.shape[0] == 1:
+            x = x[0]
+        if len(y.shape) > 0 and y.shape[0] == 1:
+            y = y[0]
         self.all_x.append(x)
         self.all_y.append(y)
         self.x = x

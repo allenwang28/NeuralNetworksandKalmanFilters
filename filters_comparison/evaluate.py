@@ -5,8 +5,10 @@ from ekf import EKF
 import numpy as np
 from scoring import MSE
 
+from progressbar import ProgressBar
 
-num_sims = 100
+
+num_sims = 500
 T = 100
 
 x_0 = 0
@@ -16,7 +18,9 @@ Q = 10
 
 ukf_mses = []
 ekf_mses = []
-for s in range(num_sims):
+bar = ProgressBar()
+for s in bar(range(num_sims)):
+    x_0 = np.random.normal(0, 10)
     sim = UNGM(x_0, R, Q, 1.)
     ukf = UKF(sim.f, sim.F,
               sim.h, sim.H,
