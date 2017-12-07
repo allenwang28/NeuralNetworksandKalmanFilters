@@ -11,6 +11,8 @@ w_i, v_i assumed to be Gaussian
 """
 
 def inv(a):
+    if not np.isscalar(a) and a.shape[0] == 1:
+        a = a[0]
     if np.isscalar(a):
         return 1 / float(a)
     else:
@@ -64,6 +66,8 @@ class EKF:
         self.P = np.dot(np.dot(F, self.P), self.P.T) + self.Q
 
     def update(self, y):
+        if not np.isscalar(y) and y.shape[0] == 1:
+            y = y[0]
         H = self.H(self.x_hat)
         e = y - self.h(self.x_hat)
         S = np.dot(np.dot(H, self.P), H.T) + self.R
@@ -88,7 +92,8 @@ if __name__ == "__main__":
     from simple_polynomial import Simple_Polynomial
     import matplotlib.pyplot as plt
     from scoring import MSE
-    x_0 = 0
+
+    x_0 = np.random.normal(0, 1, 1)
     R = 1
     Q = 1
 
@@ -97,6 +102,7 @@ if __name__ == "__main__":
               sim.h, sim.H,
               sim.Q, sim.R,
               x_0, 1)
+
     T = 100
 
     for t in range(T):

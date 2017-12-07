@@ -5,38 +5,34 @@ import os
 
 import argparse
 
-from keras.models import Sequential
-from keras.layers import SimpleRNN, Dense
+from keras.models import Sequential, load_model
+from keras.layers import SimpleRNN, Dense, Dropout, TimeDistributed
 
 from sklearn.model_selection import train_test_split
 
 import matplotlib.pyplot as plt
 
+from sklearn.preprocessing import MinMaxScaler
+
 parser = argparse.ArgumentParser()
 
 parser.add_argument('simtype', 
-                    choices=['ungm'],
+                    choices=['ungm', 'simple'],
                     action='store')
 
 parser.add_argument('--num',
                     type=int,
-                    default=10000)
+                    default=50000)
 
 parser.add_argument('--T',
                     type=int,
                     default=100)
 
-parser.add_argument('--units',
-                    type=int,
-                    default=500)
-
 parser.add_argument('--epochs',
                     type=int,
                     default=1000)
 
-
 args = parser.parse_args()
-
 
 
 
@@ -44,40 +40,35 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 SIM_DIR = os.path.join(BASE_DIR, 'sims')
 MODEL_DIR = os.path.join(BASE_DIR, 'models')
 
-TRUE_PATH = os.path.join(SIM_DIR, 'true-{0}-{1}-{2}.csv'.format(args.simtype, args.num, args.T))
-OBS_PATH = os.path.join(SIM_DIR, 'obs-{0}-{1}-{2}.csv'.format(args.simtype, args.num, args.T))
-MODEL_PATH = os.path.join(MODEL_DIR, '{0}-{1}-{2}-{3}rnn.h5'.format(args.simtype, args.num, args.T, args.units))
+
+# How many SimpleRNN units you want in a model
+# Create this number of models each time.
+MODEL_UNITS = [10, 100]
+
+sim_name = '{0}-{1}-{2}'.format(args.simtype, args.num, args.T)
+TRUE_PATH = os.path.join(SIM_DIR, 'true-{0}.npy'.format(sim_name))
+OBS_PATH = os.path.join(SIM_DIR, 'obs-{0}.npy'.format(sim_name))
 
 
-true_df = pd.read_csv(TRUE_PATH)
-obs_df = pd.read_csv(OBS_PATH)
 
-X = obs_df.values[:,:-1]
-y = true_df.values[:,1:]
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-
-X_train = np.reshape(X_train, (X_train.shape[0], 1, X_train.shape[1]))
-X_test = np.reshape(X_test, (X_test.shape[0], 1, X_test.shape[1]))
-
-model = Sequential()
-model.add(SimpleRNN(args.units, input_shape=(X_train.shape[1], X_train.shape[2])))
-model.add(Dense(y_train.shape[1], activation='linear'))
-model.compile(optimizer='adam',
-              loss='mse',
-              metrics=['accuracy'])
-print(model.summary())
-
-history = model.fit(X_train, y_train, epochs=args.epochs, batch_size=64, validation_split = 0.33)
-plt.plot(history.history['loss'])
-plt.plot(history.history['val_loss'])
-plt.title('model train vs validation loss')
-plt.ylabel('loss')
-plt.xlabel('epoch')
-plt.legend(['train', 'validation'], loc='upper right')
-plt.show()
-
-scores = model.evaluate(X_test, y_test, verbose=0)
+X = np.load(OBS_PATH)[:,:-1,:]
+y = np.load(TRUE_PATH)[:,1:,:]
 
 
-model.save(MODEL_PATH)
+for model_units in MODEL_UNITS:
+    MODEL_PATH = os.path.join(MODEL_DIR, 'rnn-units{0}-sim{1}.h5'.format(model_units, sim_name))
+
+    if os.path.exists(MODEL_PATH):
+        model = load_model(MODEL_PATH)
+    else:
+        model = Sequential()
+        model.add(SimpleRNN(model_units, input_shape=(X.shape[1], X.shape[2]), return_sequences=True))
+        model.add(Dropout(0.2))
+        model.add(TimeDistributed(Dense(y.shape[2], activation='linear')))
+        model.compile(optimizer='adam',
+                      loss='mse',
+                      metrics=['mse'])
+
+    model.fit(X, y, epochs=args.epochs, batch_size=64, validation_split = 0.33)
+    model.save(MODEL_PATH)
+

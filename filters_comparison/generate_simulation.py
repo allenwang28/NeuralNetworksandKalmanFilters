@@ -1,10 +1,10 @@
 import argparse
 
 from ungm import UNGM
+from simple_sim import SimpleSim
 import os
 
 import numpy as np
-import pandas as pd
 
 from progressbar import ProgressBar
 
@@ -16,7 +16,7 @@ SIM_DIR = os.path.join(BASE_DIR, 'sims')
 parser = argparse.ArgumentParser()
 
 parser.add_argument('simtype', 
-                    choices=['ungm'],
+                    choices=['ungm', 'simple'],
                     action='store')
 
 parser.add_argument('--num',
@@ -51,10 +51,10 @@ true_list = []
 bar = ProgressBar()
 for i in bar(range(args.num)):
     x_0 = np.random.normal(0, args.x_var, 1)
-    true = []
-    observations = []
     if args.simtype == 'ungm':
         sim = UNGM(x_0, args.Q, args.R)
+    elif args.simtype == 'simple':
+        sim = SimpleSim(x_0, args.Q, args.R)
 
     for t in range(args.T):
         sim.process_next()
@@ -62,11 +62,12 @@ for i in bar(range(args.num)):
     observations_list.append(np.array(sim.get_all_y()))
     true_list.append(np.array(sim.get_all_x()))
 
-observations_dest = os.path.join(SIM_DIR, 'obs-{0}-{1}-{2}.csv'.format(args.simtype, args.num, args.T))
-true_dest= os.path.join(SIM_DIR, 'true-{0}-{1}-{2}.csv'.format(args.simtype, args.num, args.T))
+observations_dest = os.path.join(SIM_DIR, 'obs-{0}-{1}-{2}.npy'.format(args.simtype, args.num, args.T))
+true_dest= os.path.join(SIM_DIR, 'true-{0}-{1}-{2}.npy'.format(args.simtype, args.num, args.T))
 
 print("Saving observations to {0}".format(observations_dest))
 print("Saving true to {0}".format(true_dest))
 
-pd.DataFrame(observations_list).to_csv(observations_dest)
-pd.DataFrame(true_list).to_csv(true_dest)
+
+np.save(observations_dest, np.array(observations_list))
+np.save(true_dest, np.array(true_list))
