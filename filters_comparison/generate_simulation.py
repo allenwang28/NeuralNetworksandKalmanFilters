@@ -62,12 +62,12 @@ for i in bar(range(args.num)):
     observations_list.append(np.array(sim.get_all_y()))
     true_list.append(np.array(sim.get_all_x()))
 
+
 observations_dest = os.path.join(SIM_DIR, 'obs-{0}-{1}-{2}.npy'.format(args.simtype, args.num, args.T))
 true_dest= os.path.join(SIM_DIR, 'true-{0}-{1}-{2}.npy'.format(args.simtype, args.num, args.T))
 
 print("Saving observations to {0}".format(observations_dest))
 print("Saving true to {0}".format(true_dest))
-
 
 np.save(observations_dest, np.array(observations_list))
 np.save(true_dest, np.array(true_list))

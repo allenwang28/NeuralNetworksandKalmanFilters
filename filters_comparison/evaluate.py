@@ -17,9 +17,9 @@ num_sims = 1000
 T = 50
 
 first_x_0 = 0
-R = 5.
-Q = 1.
-x_var = 0.1
+R = 20.
+Q = 5.
+x_var = 10
 
 training_size = 1000
 
